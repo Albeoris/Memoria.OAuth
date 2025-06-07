@@ -1,5 +1,7 @@
-﻿require('dotenv').config();
-const { OAuthApp } = require('@octokit/oauth-app');
+﻿import { config } from 'dotenv';
+import { OAuthApp } from '@octokit/oauth-app';
+
+config();
 
 const app = new OAuthApp({
     clientType: 'oauth-app',
@@ -7,7 +9,7 @@ const app = new OAuthApp({
     clientSecret: process.env.CLIENT_SECRET,
 });
 
-exports.handler = async (event) => {
+export async function handler(event) {
     const urlParams = new URLSearchParams(event.queryStringParameters);
 
     if (urlParams.has('code')) {
@@ -16,8 +18,6 @@ exports.handler = async (event) => {
         try {
             const { authentication } = await app.createToken({ code });
             const token = authentication.token;
-
-            // Redirect back with token
             return {
                 statusCode: 302,
                 headers: {
@@ -28,7 +28,6 @@ exports.handler = async (event) => {
             return { statusCode: 500, body: 'OAuth error: ' + error.message };
         }
     } else {
-        // If there is no code, send back to autorize
         const authUrl = app.getWebFlowAuthorizationUrl({
             redirectUrl: process.env.REDIRECT_URL,
             scopes: ['repo'],
@@ -39,4 +38,4 @@ exports.handler = async (event) => {
             headers: { Location: authUrl.url },
         };
     }
-};
+}
